@@ -41,6 +41,14 @@ def guardar_datos(request):
     try:
         # Obtener datos del formulario
         cedula = request.POST.get('cedula')
+        
+        if PersonaRegistro.objects.filter(cedula=cedula).exists():
+            return JsonResponse({
+                'success': False,
+                'message': 'Esta cédula ya está registrada en el sistema',
+                'duplicated': True  # Bandera adicional para el frontend
+            })
+
         nombre = request.POST.get('nombre')
         apellido = request.POST.get('apellido')
         nacimiento = request.POST.get('nacimiento')

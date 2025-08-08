@@ -48,39 +48,39 @@
                                 </div>
                             </div>
                         </div>
+                        <div id="formulario-adicional" class="p-2 my-2 border" style="display: none;">
+                            <h5>Información Adicional</h5>
+                            <form id="guardar-datos-form">
+                                <input type="hidden" id="cedula-oculta" name="cedula">
+                                <input type="hidden" id="nombre-oculto" name="nombre">
+                                <input type="hidden" id="apellido-oculto" name="apellido">
+                                <input type="hidden" id="nacimiento-oculto" name="nacimiento">
+                                
+                                <div class="form-floating mt-3 mb-3">
+                                    <input type="text" class="form-control" id="telefono" name="telefono" required>
+                                    <label for="telefono">Teléfono</label>
+                                </div>
+                                
+                                <div class="form-floating mt-3 mb-3">
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                    <label for="email">Correo Electrónico</label>
+                                </div>
+                                
+                                <div class="form-floating mt-3 mb-3">
+                                    <input type="text" class="form-control" id="direccion" name="direccion" required>
+                                    <label for="direccion">Dirección</label>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-success btn-block">Guardar Datos</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                     <div class="col-sm-12 col-md-6 col-lg-4 col-xl-4">
                     </div>
         </div>
         <!-- Formulario adicional para guardar datos (inicialmente oculto) -->
-<div id="formulario-adicional" class="p-2 my-2 border" style="display: none;">
-    <h5>Información Adicional</h5>
-    <form id="guardar-datos-form">
-        <input type="hidden" id="cedula-oculta" name="cedula">
-        <input type="hidden" id="nombre-oculto" name="nombre">
-        <input type="hidden" id="apellido-oculto" name="apellido">
-        <input type="hidden" id="nacimiento-oculto" name="nacimiento">
-        
-        <div class="form-floating mt-3 mb-3">
-            <input type="text" class="form-control" id="telefono" name="telefono" required>
-            <label for="telefono">Teléfono</label>
-        </div>
-        
-        <div class="form-floating mt-3 mb-3">
-            <input type="email" class="form-control" id="email" name="email" required>
-            <label for="email">Correo Electrónico</label>
-        </div>
-        
-        <div class="form-floating mt-3 mb-3">
-            <input type="text" class="form-control" id="direccion" name="direccion" required>
-            <label for="direccion">Dirección</label>
-        </div>
-        
-        <div class="d-grid">
-            <button type="submit" class="btn btn-success btn-block">Guardar Datos</button>
-        </div>
-    </form>
-</div>
 <!-- ... (código posterior se mantiene igual) ... -->
         <div class="row">
             <!-- Footer -->
@@ -171,32 +171,73 @@
         document.getElementById('guardar-datos-form').addEventListener('submit', function(event) {
             event.preventDefault();
             
-            const formData = new FormData(this);
-            const saveButton = this.querySelector('button[type="submit"]');
+            const form = this;
+            const formData = new FormData(form);
+            const saveButton = form.querySelector('button[type="submit"]');
             const originalButtonText = saveButton.textContent;
-            
+            const datosContainer = document.getElementById('datos-container');
+            const formularioAdicional = document.getElementById('formulario-adicional');
+            const cedulaInput = document.getElementById('cedula');
+
             saveButton.disabled = true;
             saveButton.textContent = 'Guardando...';
-            
+
             fetch('/guardar-datos/', {
                 method: 'POST',
                 body: formData,
                 headers: {
-                    'X-CSRFToken': getCookie('csrftoken'), // Necesario para Django CSRF
+                    'X-CSRFToken': getCookie('csrftoken'),
                     'Accept': 'application/json'
                 }
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Datos guardados exitosamente');
-                    // Puedes resetear el formulario o redirigir si es necesario
+                    // Caso éxito - Limpiar todo
+                    form.reset();
+                    formularioAdicional.style.display = 'none';
+                    cedulaInput.value = '';
+                    datosContainer.innerHTML = `
+                        <div class="alert alert-success alert-dismissible fade show">
+                            <strong>¡Éxito!</strong> Datos guardados correctamente.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        <div class="alert alert-info mt-2">
+                            <strong>Ingresa una cédula y presiona "Consultar" para ver la información.</strong>
+                        </div>
+                    `;
+                } else if (data.duplicated) {
+                    // Caso duplicado - Resetear formularios pero mostrar mensaje
+                    form.reset();
+                    formularioAdicional.style.display = 'none';
+                    cedulaInput.value = '';
+                    
+                    datosContainer.innerHTML = `
+                        <div class="alert alert-warning alert-dismissible fade show">
+                            <strong>¡Atención!</strong> ${data.message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        <div class="alert alert-info mt-2">
+                            <strong>Ingresa una cédula y presiona "Consultar" para ver la información.</strong>
+                        </div>
+                    `;
+                    
+                    // Limpiar estado de error del campo cédula si lo hubiera
+                    cedulaInput.classList.remove('is-invalid');
+                    const feedbackElements = cedulaInput.parentNode.querySelectorAll('.invalid-feedback');
+                    feedbackElements.forEach(el => el.remove());
                 } else {
-                    alert('Error al guardar: ' + (data.message || 'Error desconocido'));
+                    // Otros errores
+                    throw new Error(data.message || 'Error al guardar los datos');
                 }
             })
             .catch(error => {
-                alert('Error de conexión: ' + error.message);
+                datosContainer.innerHTML = `
+                    <div class="alert alert-danger alert-dismissible fade show">
+                        <strong>Error:</strong> ${error.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
             })
             .finally(() => {
                 saveButton.disabled = false;
