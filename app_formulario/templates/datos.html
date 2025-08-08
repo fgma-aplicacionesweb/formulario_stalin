@@ -52,6 +52,36 @@
                     <div class="col-sm-12 col-md-6 col-lg-4 col-xl-4">
                     </div>
         </div>
+        <!-- Formulario adicional para guardar datos (inicialmente oculto) -->
+<div id="formulario-adicional" class="p-2 my-2 border" style="display: none;">
+    <h5>Información Adicional</h5>
+    <form id="guardar-datos-form">
+        <input type="hidden" id="cedula-oculta" name="cedula">
+        <input type="hidden" id="nombre-oculto" name="nombre">
+        <input type="hidden" id="apellido-oculto" name="apellido">
+        <input type="hidden" id="nacimiento-oculto" name="nacimiento">
+        
+        <div class="form-floating mt-3 mb-3">
+            <input type="text" class="form-control" id="telefono" name="telefono" required>
+            <label for="telefono">Teléfono</label>
+        </div>
+        
+        <div class="form-floating mt-3 mb-3">
+            <input type="email" class="form-control" id="email" name="email" required>
+            <label for="email">Correo Electrónico</label>
+        </div>
+        
+        <div class="form-floating mt-3 mb-3">
+            <input type="text" class="form-control" id="direccion" name="direccion" required>
+            <label for="direccion">Dirección</label>
+        </div>
+        
+        <div class="d-grid">
+            <button type="submit" class="btn btn-success btn-block">Guardar Datos</button>
+        </div>
+    </form>
+</div>
+<!-- ... (código posterior se mantiene igual) ... -->
         <div class="row">
             <!-- Footer -->
             <footer class="position-absolute text-center text-lg-start bg-body-tertiary text-muted">
@@ -119,6 +149,14 @@
                                 <input type="text" class="form-control" aria-label="Small" aria-describedby="inputGroup-sizing-sm" value="${persona.birthDate}" disabled>
                             </div>
                         `;
+                        // Mostrar formulario adicional
+                        document.getElementById('formulario-adicional').style.display = 'block';
+                        
+                        // Llenar campos ocultos
+                        document.getElementById('cedula-oculta').value = persona.cedula;
+                        document.getElementById('nombre-oculto').value = persona.name;
+                        document.getElementById('apellido-oculto').value = persona.lastname;
+                        document.getElementById('nacimiento-oculto').value = persona.birthDate;
                     } else {
                         datosContainer.innerHTML = `<p>${data.message || 'No se encontraron datos para la cédula ingresada.'}</p>`;
                     }
@@ -128,6 +166,59 @@
                     console.error('Error al obtener los datos:', error);
                 });
         });
+
+        // Manejar el envío del formulario adicional
+        document.getElementById('guardar-datos-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(this);
+            const saveButton = this.querySelector('button[type="submit"]');
+            const originalButtonText = saveButton.textContent;
+            
+            saveButton.disabled = true;
+            saveButton.textContent = 'Guardando...';
+            
+            fetch('/guardar-datos/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'), // Necesario para Django CSRF
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Datos guardados exitosamente');
+                    // Puedes resetear el formulario o redirigir si es necesario
+                } else {
+                    alert('Error al guardar: ' + (data.message || 'Error desconocido'));
+                }
+            })
+            .catch(error => {
+                alert('Error de conexión: ' + error.message);
+            })
+            .finally(() => {
+                saveButton.disabled = false;
+                saveButton.textContent = originalButtonText;
+            });
+        });
+
+        // Función auxiliar para obtener el token CSRF
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
     </script>
 
 </body>
