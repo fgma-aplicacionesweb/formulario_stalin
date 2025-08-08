@@ -14,6 +14,21 @@
             background-image: url("{% static 'img/fondo.png' %}");
             background-size: cover;
         }
+        /* Animaciones de borde */
+        .success-border {
+            animation: successGlow 1s ease-in-out 3;
+        }
+        .error-border {
+            animation: errorGlow 1s ease-in-out 3;
+        }
+        @keyframes successGlow {
+            0%, 100% { box-shadow: 0 0 0px rgba(0, 255, 0, 0); }
+            50% { box-shadow: 0 0 15px rgba(0, 255, 0, 0.8); }
+        }
+        @keyframes errorGlow {
+            0%, 100% { box-shadow: 0 0 0px rgba(255, 0, 0, 0); }
+            50% { box-shadow: 0 0 15px rgba(255, 0, 0, 0.8); }
+        }
     </style>
 </head>
 <body>
@@ -28,7 +43,7 @@
             <div class="col-lg-4 bg-body-tertiary">
                 <div class="container p-3 my-3 border">
 
-                    <!-- Aquí se mostrarán las alertas -->
+                    <!-- Contenedor de alertas -->
                     <div id="alert-container"></div>
 
                     <!-- Formulario de consulta -->
@@ -61,31 +76,23 @@
                 <div id="formulario-adicional" class="p-2 my-2 border" style="display: none;">
                     <h5>Información Adicional</h5>
                     <form id="guardar-datos-form">
-                        <!-- Campos ocultos -->
                         <input type="hidden" id="cedula-oculta" name="cedula">
                         <input type="hidden" id="nombre-oculto" name="nombre">
                         <input type="hidden" id="apellido-oculto" name="apellido">
                         <input type="hidden" id="nacimiento-oculto" name="nacimiento">
 
-                        <!-- Teléfono -->
                         <div class="form-floating mt-3 mb-3">
                             <input type="text" class="form-control" id="telefono" name="telefono" required>
                             <label for="telefono">Teléfono</label>
                         </div>
-
-                        <!-- Email -->
                         <div class="form-floating mt-3 mb-3">
                             <input type="email" class="form-control" id="email" name="email" required>
                             <label for="email">Correo Electrónico</label>
                         </div>
-
-                        <!-- Dirección personal -->
                         <div class="form-floating mt-3 mb-3">
                             <input type="text" class="form-control" id="direccion" name="direccion" required>
                             <label for="direccion">Dirección</label>
                         </div>
-
-                        <!-- Estado -->
                         <div class="form-floating mt-3 mb-3">
                             <select class="form-select" id="estado" name="estado" required>
                                 <option value="">Seleccione un estado</option>
@@ -95,38 +102,28 @@
                             </select>
                             <label for="estado">Estado</label>
                         </div>
-
-                        <!-- Municipio -->
                         <div class="form-floating mt-3 mb-3">
                             <select class="form-select" id="municipio" name="municipio" required>
                                 <option value="">Seleccione un municipio</option>
                             </select>
                             <label for="municipio">Municipio</label>
                         </div>
-
-                        <!-- Parroquia -->
                         <div class="form-floating mt-3 mb-3">
                             <select class="form-select" id="parroquia" name="parroquia" required>
                                 <option value="">Seleccione una parroquia</option>
                             </select>
                             <label for="parroquia">Parroquia</label>
                         </div>
-
-                        <!-- Universidad -->
                         <div class="form-floating mt-3 mb-3">
                             <select class="form-select" id="universidad" name="universidad">
                                 <option value="">Seleccione una universidad</option>
                             </select>
                             <label for="universidad">Universidad</label>
                         </div>
-
-                        <!-- Dirección universidad -->
                         <div class="form-floating mt-3 mb-3">
                             <input type="text" class="form-control" id="direccion_uni" name="direccion_uni" readonly>
                             <label for="direccion_uni">Dirección de la Universidad</label>
                         </div>
-
-                        <!-- Botón guardar -->
                         <div class="d-grid">
                             <button type="submit" class="btn btn-success btn-block">Guardar Datos</button>
                         </div>
@@ -152,14 +149,12 @@
         </div>
     </div>
 
-    <!-- Script principal -->
     <script>
         const municipiosUrlTemplate = "{% url 'get_municipios' 0 %}";
         const parroquiasUrlTemplate = "{% url 'get_parroquias' 0 %}";
         const universidadesUrlTemplate = "{% url 'get_universidades' 0 %}";
         const direccionUniversidadUrlTemplate = "{% url 'get_direccion_universidad' 0 %}";
 
-        // Función para mostrar alertas bonitas
         function showAlert(message, type = 'success') {
             const alertContainer = document.getElementById('alert-container');
             const alertBox = document.createElement('div');
@@ -170,7 +165,6 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
             `;
             alertContainer.appendChild(alertBox);
-
             setTimeout(() => {
                 alertBox.classList.remove('show');
                 alertBox.classList.add('hide');
@@ -178,7 +172,6 @@
             }, 3000);
         }
 
-        // Consulta de cédula
         document.getElementById('formulario-cedula').addEventListener('submit', function(event) {
             event.preventDefault();
             const nacionalidad = document.getElementById('nacionalidad').value;
@@ -212,7 +205,6 @@
                 });
         });
 
-        // Guardar datos
         document.getElementById('guardar-datos-form').addEventListener('submit', function(event) {
             event.preventDefault();
             const formData = new FormData(this);
@@ -223,8 +215,11 @@
             })
             .then(res => res.json())
             .then(data => {
+                const contenedor = document.getElementById('formulario-cedula');
                 if (data.success) {
                     showAlert(data.message || 'Datos guardados correctamente.', 'success');
+                    contenedor.classList.add('success-border');
+                    setTimeout(() => contenedor.classList.remove('success-border'), 3000);
                     this.reset();
                     document.getElementById('formulario-adicional').style.display = 'none';
                     document.getElementById('formulario-cedula').reset();
@@ -235,11 +230,12 @@
                     `;
                 } else {
                     showAlert(data.message || 'No se pudieron guardar los datos.', 'danger');
+                    contenedor.classList.add('error-border');
+                    setTimeout(() => contenedor.classList.remove('error-border'), 3000);
                 }
             });
         });
 
-        // Selects dinámicos
         document.addEventListener('DOMContentLoaded', function () {
             const estadoSelect = document.getElementById('estado');
             const municipioSelect = document.getElementById('municipio');
@@ -296,7 +292,6 @@
             });
         });
 
-        // CSRF helper
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie) {
