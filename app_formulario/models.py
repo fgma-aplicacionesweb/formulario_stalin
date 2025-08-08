@@ -10,9 +10,17 @@ class PersonaRegistro(models.Model):
     telefono = models.CharField(max_length=20)
     email = models.EmailField()
     direccion = models.TextField()
+
+    # Guardar la relación con estado / municipio / parroquia
+    estado = models.ForeignKey('Estado', on_delete=models.SET_NULL, null=True, blank=True, related_name='personas')
+    municipio = models.ForeignKey('Municipio', on_delete=models.SET_NULL, null=True, blank=True, related_name='personas')
+    parroquia = models.ForeignKey('Parroquia', on_delete=models.SET_NULL, null=True, blank=True, related_name='personas')
+    universidad = models.ForeignKey('Universidad', on_delete=models.SET_NULL, null=True, blank=True, related_name='personas')
+
+
     fecha_registro = models.DateTimeField(auto_now_add=True)
     usuario_registro = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    
+
     def __str__(self):
         return f"{self.nombre} {self.apellido} ({self.cedula})"
     
