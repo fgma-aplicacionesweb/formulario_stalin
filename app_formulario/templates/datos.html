@@ -10,9 +10,9 @@
     <link rel="icon" href="{% static 'img/logo50ani.ico' %}"/>
     <title>Consulta de Datos por Cédula</title>
     <style>
-        body{
-          background-image: url("{% static 'img/fondo.png' %}");
-          background-size: cover;
+        body {
+            background-image: url("{% static 'img/fondo.png' %}");
+            background-size: cover;
         }
     </style>
 </head>
@@ -27,6 +27,10 @@
 
             <div class="col-lg-4 bg-body-tertiary">
                 <div class="container p-3 my-3 border">
+
+                    <!-- Aquí se mostrarán las alertas -->
+                    <div id="alert-container"></div>
+
                     <!-- Formulario de consulta -->
                     <form id="formulario-cedula" class="p-2 my-2 border">
                         <div class="form-floating mt-3 mb-3">
@@ -148,13 +152,31 @@
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Script principal -->
     <script>
-        // URLs dinámicas
         const municipiosUrlTemplate = "{% url 'get_municipios' 0 %}";
         const parroquiasUrlTemplate = "{% url 'get_parroquias' 0 %}";
         const universidadesUrlTemplate = "{% url 'get_universidades' 0 %}";
         const direccionUniversidadUrlTemplate = "{% url 'get_direccion_universidad' 0 %}";
+
+        // Función para mostrar alertas bonitas
+        function showAlert(message, type = 'success') {
+            const alertContainer = document.getElementById('alert-container');
+            const alertBox = document.createElement('div');
+            alertBox.className = `alert alert-${type} alert-dismissible fade show`;
+            alertBox.role = 'alert';
+            alertBox.innerHTML = `
+                <strong>${type === 'success' ? '¡Éxito!' : 'Error:'}</strong> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            `;
+            alertContainer.appendChild(alertBox);
+
+            setTimeout(() => {
+                alertBox.classList.remove('show');
+                alertBox.classList.add('hide');
+                setTimeout(() => alertBox.remove(), 500);
+            }, 3000);
+        }
 
         // Consulta de cédula
         document.getElementById('formulario-cedula').addEventListener('submit', function(event) {
@@ -201,10 +223,18 @@
             })
             .then(res => res.json())
             .then(data => {
-                alert(data.message || 'Datos guardados');
                 if (data.success) {
+                    showAlert(data.message || 'Datos guardados correctamente.', 'success');
                     this.reset();
                     document.getElementById('formulario-adicional').style.display = 'none';
+                    document.getElementById('formulario-cedula').reset();
+                    document.getElementById('datos-container').innerHTML = `
+                        <div class="alert alert-info">
+                            <strong>Ingresa una cédula y presiona "Consultar".</strong>
+                        </div>
+                    `;
+                } else {
+                    showAlert(data.message || 'No se pudieron guardar los datos.', 'danger');
                 }
             });
         });
