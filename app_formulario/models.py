@@ -2,21 +2,35 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+
 class PersonaRegistro(models.Model):
     cedula = models.CharField(max_length=20)
     nombre = models.CharField(max_length=100)
     apellido = models.CharField(max_length=100)
     fecha_nacimiento = models.DateField(null=True, blank=True)
+    lugar_nacimiento = models.CharField(max_length=150, null=True, blank=True)  # Nuevo
+
     telefono = models.CharField(max_length=20)
     email = models.EmailField()
     direccion = models.TextField()
 
-    # Guardar la relación con estado / municipio / parroquia
+    tipo_beca = models.CharField(max_length=20, null=True, blank=True)  # Nuevo
+    carrera_cursada = models.CharField(max_length=150, null=True, blank=True)  # Nuevo
+    fecha_ingreso = models.DateField(null=True, blank=True)  # Nuevo
+    fecha_egreso = models.DateField(null=True, blank=True)  # Nuevo
+    titularidad = models.CharField(max_length=50, null=True, blank=True)  # Nuevo
+    idiomas = models.TextField(null=True, blank=True)  # Nuevo
+    ocupacion_actual = models.CharField(max_length=150, null=True, blank=True)  # Nuevo
+
+    becario_internacional_en_venezuela = models.BooleanField(default=False)  # Nuevo
+    becario_venezolano_en_venezuela = models.BooleanField(default=False)  # Nuevo
+    becario_venezolano_en_exterior = models.BooleanField(default=False)  # Nuevo
+
+    # Ubicación
     estado = models.ForeignKey('Estado', on_delete=models.SET_NULL, null=True, blank=True, related_name='personas')
     municipio = models.ForeignKey('Municipio', on_delete=models.SET_NULL, null=True, blank=True, related_name='personas')
     parroquia = models.ForeignKey('Parroquia', on_delete=models.SET_NULL, null=True, blank=True, related_name='personas')
     universidad = models.ForeignKey('Universidad', on_delete=models.SET_NULL, null=True, blank=True, related_name='personas')
-
 
     fecha_registro = models.DateTimeField(auto_now_add=True)
     usuario_registro = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)

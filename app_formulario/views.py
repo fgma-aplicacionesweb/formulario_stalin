@@ -55,9 +55,23 @@ def guardar_datos(request):
         nombre = request.POST.get('nombre')
         apellido = request.POST.get('apellido')
         nacimiento = request.POST.get('nacimiento')
+        lugar_nacimiento = request.POST.get('lugar_nacimiento')
+
         telefono = request.POST.get('telefono')
         email = request.POST.get('email')
         direccion = request.POST.get('direccion')
+
+        tipo_beca = request.POST.get('tipo_beca')
+        carrera_cursada = request.POST.get('carrera_cursada')
+        fecha_ingreso = request.POST.get('fecha_ingreso')
+        fecha_egreso = request.POST.get('fecha_egreso')
+        titularidad = request.POST.get('titularidad')
+        idiomas = request.POST.get('idiomas')
+        ocupacion_actual = request.POST.get('ocupacion_actual')
+
+        becario_internacional_en_venezuela = bool(request.POST.get('becario_internacional_en_venezuela'))
+        becario_venezolano_en_venezuela = bool(request.POST.get('becario_venezolano_en_venezuela'))
+        becario_venezolano_en_exterior = bool(request.POST.get('becario_venezolano_en_exterior'))
 
         estado_id = request.POST.get('estado')
         municipio_id = request.POST.get('municipio')
@@ -70,16 +84,27 @@ def guardar_datos(request):
         universidad = Universidad.objects.get(id_uni=universidad_id) if universidad_id else None
 
         if not all([cedula, nombre, apellido, telefono, email, direccion]):
-            return JsonResponse({'success': False, 'message': 'Todos los campos son requeridos'})
+            return JsonResponse({'success': False, 'message': 'Todos los campos obligatorios deben completarse'})
 
         registro = PersonaRegistro(
             cedula=cedula,
             nombre=nombre,
             apellido=apellido,
             fecha_nacimiento=nacimiento or None,
+            lugar_nacimiento=lugar_nacimiento,
             telefono=telefono,
             email=email,
             direccion=direccion,
+            tipo_beca=tipo_beca,
+            carrera_cursada=carrera_cursada,
+            fecha_ingreso=fecha_ingreso or None,
+            fecha_egreso=fecha_egreso or None,
+            titularidad=titularidad,
+            idiomas=idiomas,
+            ocupacion_actual=ocupacion_actual,
+            becario_internacional_en_venezuela=becario_internacional_en_venezuela,
+            becario_venezolano_en_venezuela=becario_venezolano_en_venezuela,
+            becario_venezolano_en_exterior=becario_venezolano_en_exterior,
             estado=estado,
             municipio=municipio,
             parroquia=parroquia,
@@ -92,6 +117,7 @@ def guardar_datos(request):
 
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)})
+
 
 
 # Endpoints AJAX
@@ -124,18 +150,15 @@ def lista_personas(request):
     return render(request, 'lista_personas.html', {'personas': personas})
 
 def lista_personas_ajax(request):
-    # Parámetros que envía DataTables
     draw = int(request.GET.get('draw', 1))
     start = int(request.GET.get('start', 0))
     length = int(request.GET.get('length', 10))
     search_value = request.GET.get('search[value]', '')
 
-    # Query base
     queryset = PersonaRegistro.objects.select_related(
         'estado', 'municipio', 'parroquia', 'universidad'
     )
 
-    # Filtro de búsqueda
     if search_value:
         queryset = queryset.filter(
             Q(cedula__icontains=search_value) |
@@ -144,15 +167,18 @@ def lista_personas_ajax(request):
             Q(estado__nom_est__icontains=search_value) |
             Q(municipio__nom_mun__icontains=search_value) |
             Q(parroquia__nom_par__icontains=search_value) |
-            Q(universidad__nomb_uni__icontains=search_value)
+            Q(universidad__nomb_uni__icontains=search_value) |
+            Q(tipo_beca__icontains=search_value) |
+            Q(lugar_nacimiento__icontains=search_value) |
+            Q(carrera_cursada__icontains=search_value) |
+            Q(titularidad__icontains=search_value) |
+            Q(idiomas__icontains=search_value) |
+            Q(ocupacion_actual__icontains=search_value)
         )
 
     total_registros = queryset.count()
-
-    # Paginación
     queryset = queryset.order_by('-fecha_registro')[start:start + length]
 
-    # Construir datos
     data = []
     for p in queryset:
         direccion_uni = ''
@@ -170,6 +196,17 @@ def lista_personas_ajax(request):
             p.parroquia.nom_par if p.parroquia else '',
             p.universidad.nomb_uni if p.universidad else '',
             direccion_uni,
+            p.tipo_beca or '',
+            p.lugar_nacimiento or '',
+            p.carrera_cursada or '',
+            p.fecha_ingreso.strftime('%d/%m/%Y') if p.fecha_ingreso else '',
+            p.fecha_egreso.strftime('%d/%m/%Y') if p.fecha_egreso else '',
+            p.titularidad or '',
+            p.idiomas or '',
+            p.ocupacion_actual or '',
+            "Sí" if p.becario_internacional_en_venezuela else "No",
+            "Sí" if p.becario_venezolano_en_venezuela else "No",
+            "Sí" if p.becario_venezolano_en_exterior else "No",
             p.fecha_registro.strftime('%d/%m/%Y %H:%M')
         ])
 
